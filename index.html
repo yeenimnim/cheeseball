@@ -54,7 +54,7 @@
     </label>
     <label>
       플레이어 위치:
-      <input id="playerOffsetSlider" class="slider" type="range" min="0" max="100" value="50">
+      <input id="playerOffsetSlider" class="slider" type="range" min="20" max="140" value="100">
     </label>
     <div class="button-row">
       <button id="resetHitsButton">카운트 리셋</button>
@@ -67,35 +67,35 @@
     const ctx = canvas.getContext("2d");
 
     const LOOP_HEIGHT = 300;
-    let ORBIT_RADIUS = 100;
+    let ORBIT_RADIUS = 100; // 치즈볼 궤도 반지름
     const CENTER_X = 160;
     const CENTER_Y = 150;
     const CIRCLE_RADIUS = 10; // 치즈볼 반지름
-    const HIT_COOLDOWN = 100; // 딜레이 (ms)
+    const HIT_COOLDOWN = 100; // 충돌 후 딜레이 시간 (ms)
 
     const playerWidth = 20;
     const playerHeight = 20;
 
+    let playerXOffset = ORBIT_RADIUS; // 플레이어가 중심에서 얼마나 떨어져있는지
     let player1Y = 0;
     let player2Y = 0;
-    let playerXOffset = 50; // 중앙에서 시작하도록 변경
 
-    let electricAngle = 0;
+    let electricAngle = 0; // 치즈볼 각도 (회전 위치)
     let player1Hits = 0;
     let player2Hits = 0;
     let lastHitTime1 = 0;
     let lastHitTime2 = 0;
 
-    let PLAYER_SPEED = 5;
-    let ELECTRIC_SPEED = 0.04;
-    const DEFAULT_ELECTRIC_SPEED = 0.04; // 원래 속도 저장용
+    let PLAYER_SPEED = 5; // 플레이어 낙하 속도
+    let ELECTRIC_SPEED = 0.04; // 치즈볼 회전 속도
+    const DEFAULT_ELECTRIC_SPEED = 0.04;
 
     const playerSpeedSlider = document.getElementById("playerSpeedSlider");
     const electricSpeedSlider = document.getElementById("electricSpeedSlider");
     const orbitRadiusSlider = document.getElementById("orbitRadiusSlider");
     const playerOffsetSlider = document.getElementById("playerOffsetSlider");
 
-    // 슬라이더 값이 바뀔 때마다 변수 반영
+    // 슬라이더 값 변경 시 변수 업데이트
     playerSpeedSlider.addEventListener("input", e => {
       PLAYER_SPEED = parseInt(e.target.value);
     });
@@ -109,7 +109,7 @@
       playerXOffset = parseInt(e.target.value);
     });
 
-    // 카운트 리셋
+    // 히트 수 리셋
     document.getElementById("resetHitsButton").addEventListener("click", () => {
       player1Hits = 0;
       player2Hits = 0;
@@ -117,38 +117,38 @@
       document.getElementById("player2Hits").textContent = player2Hits;
     });
 
-    // 속도 및 위치 리셋
+    // 설정값 리셋
     document.getElementById("resetSpeedButton").addEventListener("click", () => {
       PLAYER_SPEED = 5;
       ELECTRIC_SPEED = DEFAULT_ELECTRIC_SPEED;
       ORBIT_RADIUS = 100;
-      playerXOffset = 50;
+      playerXOffset = 100;
       playerSpeedSlider.value = 5;
       electricSpeedSlider.value = DEFAULT_ELECTRIC_SPEED;
       orbitRadiusSlider.value = 100;
-      playerOffsetSlider.value = 50;
+      playerOffsetSlider.value = 100;
     });
 
     function update() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const now = Date.now();
 
-      // 치즈볼 위치 계산 (시계방향 회전)
+      // 치즈볼 위치 계산
       electricAngle = (electricAngle + ELECTRIC_SPEED) % (Math.PI * 2);
       const electricY = CENTER_Y + ORBIT_RADIUS * Math.sin(electricAngle);
       const electricX = CENTER_X + ORBIT_RADIUS * Math.cos(electricAngle);
 
-      // 플레이어의 X 위치 계산 - 중심 기준 좌우로 떨어짐
-      const player1X = CENTER_X - playerXOffset - playerWidth - 10;
-      const player2X = CENTER_X + playerXOffset + 10;
+      // 플레이어는 고정된 거리만큼 중심에서 떨어져 있게 설정
+      const player1X = CENTER_X - playerXOffset - playerWidth / 2;
+      const player2X = CENTER_X + playerXOffset - playerWidth / 2;
 
-      // 플레이어 수직 이동 및 루프
+      // 아래로 낙하, 끝에 닿으면 위로 루프
       player1Y += PLAYER_SPEED;
       player2Y += PLAYER_SPEED;
       if (player1Y >= LOOP_HEIGHT) player1Y = 0;
       if (player2Y >= LOOP_HEIGHT) player2Y = 0;
 
-      // 충돌 판정: 중심 거리로 비교
+      // 충돌 감지 함수
       const isCollidingWithPlayer = (playerX, playerY) => {
         const centerX = playerX + playerWidth / 2;
         const centerY = playerY + playerHeight / 2;
@@ -158,7 +158,7 @@
         return distance < CIRCLE_RADIUS + Math.min(playerWidth, playerHeight) / 2;
       };
 
-      // 충돌 시 딜레이 쿨다운 적용 후 카운트
+      // 충돌 시 쿨다운 적용 후 카운트 증가
       if (isCollidingWithPlayer(player1X, player1Y) && now - lastHitTime1 > HIT_COOLDOWN) {
         player1Hits++;
         lastHitTime1 = now;
@@ -168,7 +168,7 @@
         lastHitTime2 = now;
       }
 
-      // 카운트 갱신
+      // UI에 충돌 수 반영
       document.getElementById("player1Hits").textContent = player1Hits;
       document.getElementById("player2Hits").textContent = player2Hits;
 
@@ -178,13 +178,15 @@
       ctx.arc(electricX, electricY, CIRCLE_RADIUS, 0, Math.PI * 2);
       ctx.fill();
 
-      // 플레이어 그리기
+      // 플레이어 1 그리기
       ctx.fillStyle = "red";
       ctx.fillRect(player1X, player1Y, playerWidth, playerHeight);
+
+      // 플레이어 2 그리기
       ctx.fillStyle = "blue";
       ctx.fillRect(player2X, player2Y, playerWidth, playerHeight);
 
-      requestAnimationFrame(update); // 매 프레임 반복
+      requestAnimationFrame(update); // 다음 프레임 호출
     }
 
     update(); // 루프 시작
