@@ -31,14 +31,21 @@
     const ctx = canvas.getContext("2d");
 
     const LOOP_HEIGHT = 300;
-    const PLAYER_SPEED = 5; // Increased from 3
-    const ELECTRIC_SPEED = 0.04; // Increased from 0.02
+    const PLAYER_SPEED = 5;
+    const ELECTRIC_SPEED = 0.04;
     const TOLERANCE = 12;
     const ORBIT_RADIUS = 100;
     const CENTER_X = 160;
     const CENTER_Y = 150;
     const CIRCLE_RADIUS = 10;
     const HIT_COOLDOWN = 500; // milliseconds
+
+    const playerWidth = 20;
+    const playerHeight = 20;
+
+    // 플레이어 x 위치를 치즈볼 궤도 끝에 위치하도록 조정
+    const player1X = CENTER_X - ORBIT_RADIUS - playerWidth / 2; // 왼쪽 끝
+    const player2X = CENTER_X + ORBIT_RADIUS - playerWidth / 2; // 오른쪽 끝
 
     let player1Y = 0;
     let player2Y = 0;
@@ -62,17 +69,20 @@
       if (player1Y >= LOOP_HEIGHT) player1Y = 0;
       if (player2Y >= LOOP_HEIGHT) player2Y = 0;
 
-      const isCollidingWithPlayer = (playerX, playerY) =>
-        electricX + CIRCLE_RADIUS > playerX &&
-        electricX - CIRCLE_RADIUS < playerX + 20 &&
-        electricY + CIRCLE_RADIUS > playerY &&
-        electricY - CIRCLE_RADIUS < playerY + 20;
+      const isCollidingWithPlayer = (playerX, playerY) => {
+        const centerX = playerX + playerWidth / 2;
+        const centerY = playerY + playerHeight / 2;
+        const dx = electricX - centerX;
+        const dy = electricY - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < CIRCLE_RADIUS + Math.min(playerWidth, playerHeight) / 2;
+      };
 
-      if (isCollidingWithPlayer(80, player1Y) && now - lastHitTime1 > HIT_COOLDOWN) {
+      if (isCollidingWithPlayer(player1X, player1Y) && now - lastHitTime1 > HIT_COOLDOWN) {
         player1Hits++;
         lastHitTime1 = now;
       }
-      if (isCollidingWithPlayer(220, player2Y) && now - lastHitTime2 > HIT_COOLDOWN) {
+      if (isCollidingWithPlayer(player2X, player2Y) && now - lastHitTime2 > HIT_COOLDOWN) {
         player2Hits++;
         lastHitTime2 = now;
       }
@@ -86,10 +96,10 @@
       ctx.fill();
 
       ctx.fillStyle = "red";
-      ctx.fillRect(80, player1Y, 20, 20);
+      ctx.fillRect(player1X, player1Y, playerWidth, playerHeight);
 
       ctx.fillStyle = "blue";
-      ctx.fillRect(220, player2Y, 20, 20);
+      ctx.fillRect(player2X, player2Y, playerWidth, playerHeight);
 
       requestAnimationFrame(update);
     }
