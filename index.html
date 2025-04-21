@@ -16,6 +16,20 @@
       border: 1px solid #ccc;
       border-radius: 10px;
     }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    .slider {
+      width: 200px;
+    }
+    .button-row {
+      display: flex;
+      gap: 10px;
+    }
   </style>
 </head>
 <body>
@@ -25,27 +39,37 @@
     <p>🔴 Player 1 (반대 방향): <span id="player1Hits">0</span> hits</p>
     <p>🔵 Player 2 (같은 방향): <span id="player2Hits">0</span> hits</p>
   </div>
+  <div class="controls">
+    <label>
+      낙하속도:
+      <input id="playerSpeedSlider" class="slider" type="range" min="1" max="20" value="5">
+    </label>
+    <label>
+      치즈볼 속도:
+      <input id="electricSpeedSlider" class="slider" type="range" min="0.01" max="0.2" step="0.01" value="0.04">
+    </label>
+    <div class="button-row">
+      <button id="resetHitsButton">카운트 초기화</button>
+      <button id="resetSpeedButton">속도 초기화</button>
+    </div>
+  </div>
 
   <script>
     const canvas = document.getElementById("loopCanvas");
     const ctx = canvas.getContext("2d");
 
     const LOOP_HEIGHT = 300;
-    const PLAYER_SPEED = 5;
-    const ELECTRIC_SPEED = 0.04;
-    const TOLERANCE = 12;
     const ORBIT_RADIUS = 100;
     const CENTER_X = 160;
     const CENTER_Y = 150;
     const CIRCLE_RADIUS = 10;
-    const HIT_COOLDOWN = 500; // milliseconds
+    const HIT_COOLDOWN = 300; // 줄인 딜레이 (기존 500ms)
 
     const playerWidth = 20;
     const playerHeight = 20;
 
-    // 플레이어 x 위치를 치즈볼 궤도 끝에 위치하도록 조정
-    const player1X = CENTER_X - ORBIT_RADIUS - playerWidth / 2; // 왼쪽 끝
-    const player2X = CENTER_X + ORBIT_RADIUS - playerWidth / 2; // 오른쪽 끝
+    const player1X = CENTER_X - ORBIT_RADIUS - playerWidth / 2;
+    const player2X = CENTER_X + ORBIT_RADIUS - playerWidth / 2;
 
     let player1Y = 0;
     let player2Y = 0;
@@ -54,6 +78,33 @@
     let player2Hits = 0;
     let lastHitTime1 = 0;
     let lastHitTime2 = 0;
+
+    let PLAYER_SPEED = 5;
+    let ELECTRIC_SPEED = 0.04;
+
+    const playerSpeedSlider = document.getElementById("playerSpeedSlider");
+    const electricSpeedSlider = document.getElementById("electricSpeedSlider");
+
+    playerSpeedSlider.addEventListener("input", e => {
+      PLAYER_SPEED = parseInt(e.target.value);
+    });
+    electricSpeedSlider.addEventListener("input", e => {
+      ELECTRIC_SPEED = parseFloat(e.target.value);
+    });
+
+    document.getElementById("resetHitsButton").addEventListener("click", () => {
+      player1Hits = 0;
+      player2Hits = 0;
+      document.getElementById("player1Hits").textContent = player1Hits;
+      document.getElementById("player2Hits").textContent = player2Hits;
+    });
+
+    document.getElementById("resetSpeedButton").addEventListener("click", () => {
+      PLAYER_SPEED = 5;
+      ELECTRIC_SPEED = 0.04;
+      playerSpeedSlider.value = 5;
+      electricSpeedSlider.value = 0.04;
+    });
 
     function update() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
