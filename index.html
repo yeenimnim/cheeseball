@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>스빠룬키</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>치즈볼 시뮬</h1>
+  <canvas id="loopCanvas" width="320" height="300"></canvas>
+  <div style="text-align: center; margin-top: 10px;">
+    <p>🔴 Player 1 (반대 방향): <span id="player1Hits">0</span> hits</p>
+    <p>🔵 Player 2 (같은 방향): <span id="player2Hits">0</span> hits</p>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("loopCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const LOOP_HEIGHT = 300;
+    const PLAYER_SPEED = 5; // Increased from 3
+    const ELECTRIC_SPEED = 0.04; // Increased from 0.02
+    const TOLERANCE = 12;
+    const ORBIT_RADIUS = 100;
+    const CENTER_X = 160;
+    const CENTER_Y = 150;
+    const CIRCLE_RADIUS = 10;
+    const HIT_COOLDOWN = 500; // milliseconds
+
+    let player1Y = 0;
+    let player2Y = 0;
+    let electricAngle = 0;
+    let player1Hits = 0;
+    let player2Hits = 0;
+    let lastHitTime1 = 0;
+    let lastHitTime2 = 0;
+
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const now = Date.now();
+
+      electricAngle = (electricAngle + ELECTRIC_SPEED) % (Math.PI * 2);
+      const electricY = CENTER_Y + ORBIT_RADIUS * Math.sin(electricAngle);
+      const electricX = CENTER_X + ORBIT_RADIUS * Math.cos(electricAngle);
+
+      player1Y += PLAYER_SPEED;
+      player2Y += PLAYER_SPEED;
+      if (player1Y >= LOOP_HEIGHT) player1Y = 0;
+      if (player2Y >= LOOP_HEIGHT) player2Y = 0;
+
+      const isCollidingWithPlayer = (playerX, playerY) =>
+        electricX + CIRCLE_RADIUS > playerX &&
+        electricX - CIRCLE_RADIUS < playerX + 20 &&
+        electricY + CIRCLE_RADIUS > playerY &&
+        electricY - CIRCLE_RADIUS < playerY + 20;
+
+      if (isCollidingWithPlayer(80, player1Y) && now - lastHitTime1 > HIT_COOLDOWN) {
+        player1Hits++;
+        lastHitTime1 = now;
+      }
+      if (isCollidingWithPlayer(220, player2Y) && now - lastHitTime2 > HIT_COOLDOWN) {
+        player2Hits++;
+        lastHitTime2 = now;
+      }
+
+      document.getElementById("player1Hits").textContent = player1Hits;
+      document.getElementById("player2Hits").textContent = player2Hits;
+
+      ctx.fillStyle = "orange";
+      ctx.beginPath();
+      ctx.arc(electricX, electricY, CIRCLE_RADIUS, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "red";
+      ctx.fillRect(80, player1Y, 20, 20);
+
+      ctx.fillStyle = "blue";
+      ctx.fillRect(220, player2Y, 20, 20);
+
+      requestAnimationFrame(update);
+    }
+
+    update();
+  </script>
+</body>
+</html>
